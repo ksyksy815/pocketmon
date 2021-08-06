@@ -1,8 +1,8 @@
 import { useState, useEffect} from 'react'
 import axios from 'axios'
 import styled from 'styled-components'
-import PokemonList from '../components/PokemonList'
 import Pagination from '../Pagination'
+import PokemonImage from '../components/PokemonImage'
 
 const ListWrapper = styled.div`
   width: 100%;
@@ -12,10 +12,11 @@ const ListWrapper = styled.div`
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
+  row-gap: 2rem;
+  padding: 2rem;
 
   ul {
     width: 80%;
-    padding: 2rem;
     display: flex;
     flex-direction: column;
     row-gap: 1rem;
@@ -85,7 +86,8 @@ export default function List() {
     let cancel;
     axios.get(currentPageUrl, {
       cancelToken: new axios.CancelToken( c => cancel = c)
-    }).then( res => {
+    })
+    .then( res => {
       setNextPageUrl(res.data.next)
       setPrevPageUrl(res.data.previous)
       setPokemon(res.data.results.map( poketmon => {
@@ -95,12 +97,13 @@ export default function List() {
         }
       }))
     })
+    .catch(err=>console.log(err))
 
     return () => cancel()
-
   }, [currentPageUrl])
 
-  useEffect(() => {
+  useEffect(()=> {
+    setLoading(true)
     pokemon.forEach(el => {
       axios.get(el.url)
       .then(res => {
@@ -110,14 +113,23 @@ export default function List() {
             image: res.data.sprites.front_default,
             abilities: res.data.abilities.reduce((acc, cur) => [...acc, cur.ability.name], []),
             stats: res.data.stats.reduce((acc, cur) => [...acc, `${cur.stat.name}: ${cur.base_stat}`], []),
-          }
+          } 
           return [...prev, one]
         })
         setLoading(false)
       })
+      .catch(err=>console.log(err))
     })
-    
   }, [pokemon])
+
+  // useEffect(()=> {
+  //   pokemonInfo.forEach(el => {
+  //     axios.get(el.image)
+  //     .then(res => {
+
+  //     })
+  //   })
+  // }, [])
 
   function gotoNextPage() {
     setCurrentPageUrl(nextPageUrl)
@@ -132,13 +144,11 @@ export default function List() {
   return (
     <ListWrapper>
       <ul>
-        {pokemon.map( pokemon => (
+        {pokemon.map( (pokemon, i) => (
           <li className="pokemonLi" key={pokemon.name}>
             <h3>Name: {pokemon.name}</h3>
             <section className="pokemonInfo">
-              <div className="pokemonImage">
-                <img src={pokemonInfo.image} alt={pokemon.name}></img>
-              </div>
+              <PokemonImage name={pokemon.name} pokemonInfo={pokemonInfo[i]} />
               <div className="pokemonDetails">
                 <div className="abilities">
                 {
